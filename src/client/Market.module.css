@@ -841,7 +841,7 @@
 .irowMissing{filter:grayscale(1);opacity:.5}
 .irow>.src,.irow>.owner{white-space:nowrap;flex-shrink:0}
 .irow button{white-space:nowrap;flex-shrink:0}
-.tabSearchRow{display:flex;align-items:center;gap:8px;padding:0 4px 10px}
+.tabSearchRow{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:0 4px 10px}
 .tabSearch{flex:1;min-width:0}
 /* Capability disclosure (#401). Quiet by design: these are facts beside the
    install button, not a warning banner — the one loud element is a red line,
@@ -959,6 +959,7 @@
 /* One flex row: name, state, truncated note, assign. Do not reuse .act —
    that class carries the card's margin-top and drops the state off the line. */
 .ungroupedRow{flex-wrap:nowrap}
+.groupMember.sourceMember{flex-wrap:wrap}
 .ungroupedRow>.nm{flex:0 1 auto;font-size:12px;line-height:18px;max-width:42%}
 .ungroupedState{display:inline-flex;align-items:center;flex:0 1 auto;min-width:0;max-width:46%;margin:0}
 .ungroupedState > span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

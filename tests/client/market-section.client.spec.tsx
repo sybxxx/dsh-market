@@ -53,6 +53,7 @@ function stubFetch(overrides: Record<string, unknown> = {}, mountPath = '') {
           }])),
         }
       : route === '/dsh-market/installed' ? { profile: 'web', installed: {}, live: [], disabled: [], groups: {}, groupOrder: [], favorites: [], blocked: [] }
+      : route === '/dsh-market/installed-tools' ? { canOpen: true, plugins: {} }
       : route === '/dsh-market/status' ? { active: false, pnpm: true, boot: 'boot-1', restart: true, installed: {} }
       : route === '/dsh-market/updates' ? { updates: {} }
       : route === '/dsh-market/toggle' ? { ok: true, disabled: [], live: [], activation: {} }
@@ -5598,7 +5599,8 @@ describe('local-dev restore', () => {
     render(<MarketSection {...props()} />)
     await screen.findByText('dsh-loop')
     fireEvent.click(screen.getByRole('button', { name: /Installed/ }))
-    expect(await screen.findByText(`v1.0.0 · ${en.linkedDev}`)).toBeTruthy()
+    expect(await screen.findByText('v1.0.0')).toBeTruthy()
+    expect(screen.getByText(en.sourceUnclassified, { selector: 'span' })).toBeTruthy()
     // `../dsh-loop` is relative to the profile; a copied copy would point nowhere.
     expect(screen.getByText('../dsh-loop')).toBeTruthy()
     expect(screen.queryByRole('button', { name: en.copyPath })).toBeNull()
@@ -5631,7 +5633,8 @@ describe('local-dev restore', () => {
       fireEvent.click(await screen.findByRole('button', { name: /Installed/ }))
       const path = await screen.findByText('…/plugins/mystery-plug')
       expect(path.getAttribute('title')).toBe('/Users/me/work/plugins/mystery-plug')
-      expect(screen.getByText(`v0.1.14 · ${en.linkedDev}`)).toBeTruthy()
+      expect(screen.getByText('v0.1.14')).toBeTruthy()
+      expect(screen.getByText(en.sourceUnclassified, { selector: 'span' })).toBeTruthy()
       fireEvent.click(screen.getByRole('button', { name: en.copyPath }))
       await waitFor(() => expect(writeText).toHaveBeenCalledWith('/Users/me/work/plugins/mystery-plug'))
       expect(await screen.findByText(en.pathCopied)).toBeTruthy()
@@ -8976,6 +8979,50 @@ describe('when DSH has unloaded the market (#962)', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+})
+
+describe('installed source categories', () => {
+  const installed = { 'online-one': '1.0.0', 'local-one': 'file:../local', 'fork-one': 'file:fork.tgz' }
+  const plugins = {
+    'online-one': { category: 'online', choice: 'auto', installedDirectory: 'C:/runtime/online-one' },
+    'local-one': { category: 'original', choice: 'original', installedDirectory: 'C:/runtime/local-one' },
+    'fork-one': { category: 'modified', choice: 'modified', installedDirectory: 'C:/runtime/fork-one' },
+  }
+  it('filters the list and groups by identity without changing installation sources', async () => {
+    stubFetch({
+      '/dsh-market/installed': { installed, present: Object.keys(installed), groups: { Mine: ['local-one', 'fork-one'] }, groupOrder: ['Mine'], disabled: [], live: [] },
+      '/dsh-market/installed-tools': { plugins, canOpen: true },
+    })
+    const { container } = render(<MarketSection {...props()} />)
+    fireEvent.click(await screen.findByRole('button', { name: /Installed/ }))
+    await screen.findByText(en.sourceModified, { selector: 'span' })
+    fireEvent.change(screen.getByRole('combobox', { name: en.sourceFilter }), { target: { value: 'modified' } })
+    await waitFor(() => expect(container.querySelectorAll('[data-plugin-source]')).toHaveLength(1))
+    expect(container.querySelector('[data-plugin-source="fork-one"]')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: en.tabGroups }))
+    expect(container.querySelector('[data-plugin-source="fork-one"]')).toBeTruthy()
+    expect(container.querySelector('[data-plugin-source="local-one"]')).toBeNull()
+    expect(fetchCalls.filter(call => call.method === 'POST' && /install|update|uninstall/.test(call.path))).toEqual([])
+  })
+  it('refreshes a manually changed category and retains it after remount', async () => {
+    let category = 'unclassified'
+    stubFetch({
+      '/dsh-market/installed': { installed: { 'fork-one': 'file:fork.tgz' }, present: ['fork-one'], live: [], disabled: [] },
+      '/dsh-market/installed-tools': () => ({ canOpen: true, plugins: { 'fork-one': { category, choice: category === 'unclassified' ? 'auto' : category } } }),
+      '/dsh-market/plugin-provenance': () => { category = 'modified'; return { ok: true } },
+    })
+    const first = render(<MarketSection {...props()} />)
+    fireEvent.click(await screen.findByRole('button', { name: /Installed/ }))
+    fireEvent.click(await screen.findByRole('button', { name: `${en.sourceManage} fork-one` }))
+    fireEvent.change(screen.getAllByRole('combobox', { name: en.sourceFilter }).at(-1)!, { target: { value: 'modified' } })
+    fireEvent.click(screen.getByRole('button', { name: en.sourceSave }))
+    await screen.findByText(en.sourceModified, { selector: 'span' })
+    first.unmount()
+    render(<MarketSection {...props()} />)
+    fireEvent.click(await screen.findByRole('button', { name: /Installed/ }))
+    expect(await screen.findByText(en.sourceModified, { selector: 'span' })).toBeTruthy()
+    expect(fetchCalls.filter(call => call.path === '/dsh-market/plugin-provenance')).toHaveLength(1)
   })
 })
 

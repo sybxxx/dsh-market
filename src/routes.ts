@@ -13,6 +13,7 @@ import { dirname, join } from 'node:path'
 import { Readable } from 'node:stream'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { load as loadYaml } from 'js-yaml'
+import { mountInstalledManagement } from './installed-management.ts'
 import { forgetCatalog, loadRegistry, pluginCategories } from './registry.ts'
 import { settingsNamespaceState } from './settings.ts'
 import {
@@ -2151,6 +2152,7 @@ export function mountMarketRoutes(
   }
 
   const disposers = [
+    ...mountInstalledManagement(registerRoute, activeProfileDir, config.profile),
     registerRoute({
       kind: 'exact',
       path: '/dsh-market/api/v1/capabilities',

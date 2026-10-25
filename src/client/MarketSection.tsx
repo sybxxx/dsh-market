@@ -42,6 +42,8 @@ import css from './Market.module.css'
 import { MARK_BLOCK_RADIUS, MARK_BLOCK_SIZE, MARK_GRID_BLOCKS, MARK_PLUG_BLOCK, MARK_VIEW_BOX } from './market-mark.ts'
 import { CommentsModal } from './CommentsModal.tsx'
 import { SearchInput } from './SearchInput.tsx'
+import { InstalledSourceEditor, InstalledSourceTools, SourceFilter, useInstalledSources } from './InstalledSourceTools.tsx'
+import { sourceCategory, type SourceCategory } from '../plugin-provenance.ts'
 import { downloadStatsText } from './download-stats.ts'
 import { OperationsPanel } from './OperationsPanel.tsx'
 import { applyRecovery, fetchRecovery, initialKeep, RecoveryPanel, watchRestart, type RecoveryView } from './RecoveryPanel.tsx'
@@ -2150,6 +2152,7 @@ export function MarketSection(props: MarketSectionProps) {
    */
   const [marketGone, setMarketGone] = useState(false)
   const [installed, setInstalledState] = useState<InstalledMap>(cachedInstalled ?? {})
+  const sourceTools = useInstalledSources(installed)
   const setInstalled = useCallback((value: InstalledMap) => { cachedInstalled = value; setInstalledState(value) }, [])
   const [repoIdentities, setRepoIdentitiesState] = useState<InstalledRepoIdentities>(cachedRepoIdentities ?? {})
   const setRepoIdentities = useCallback((value: InstalledRepoIdentities) => {
@@ -2178,6 +2181,8 @@ export function MarketSection(props: MarketSectionProps) {
   const [themeSearchReset, resetThemeSearch] = useState(0)
   const [qFavorites, setQFavorites] = useState('')
   const [qInstalled, setQInstalled] = useState('')
+  const [sourceFilter, setSourceFilter] = useState<'all' | SourceCategory>('all')
+  const [editingSource, setEditingSource] = useState<string | null>(null)
   const [cat, setCat] = useState('all')
   // FLAQ Desktop supplies this for onboarding/feature navigation; upstream dsh web omits it, so ordinary web opens intentionally leave this effect idle.
   useEffect(() => {
@@ -3444,7 +3449,7 @@ export function MarketSection(props: MarketSectionProps) {
     const el = bodyRef.current
     if (el !== null) el.scrollTop = 0
     setShowTop(false)
-  }, [tab, q, cat, sortField, sortDir, timeRange, compatibleWithHost, qThemes, themeSortField, themeSortDir, themeTimeRange, qFavorites, favSortField, favSortDir, favTimeRange, qInstalled, installedView])
+  }, [tab, q, cat, sortField, sortDir, timeRange, compatibleWithHost, qThemes, themeSortField, themeSortDir, themeTimeRange, qFavorites, favSortField, favSortDir, favTimeRange, qInstalled, installedView, sourceFilter])
 
   // The list, plus how many entries the host filter took out of it (#872).
   // Both come from one pass over the same query, so the count is exactly
@@ -5542,6 +5547,14 @@ export function MarketSection(props: MarketSectionProps) {
     return { entry, note, shown: note ?? authored }
   }
 
+  const matchesSource = (name: string) => sourceFilter === 'all'
+    || (sourceTools.data?.plugins[name]?.category ?? sourceCategory(String(installed[name] ?? ''))) === sourceFilter
+  const renderSourceTools = (name: string) => (
+    <InstalledSourceTools name={name} spec={String(installed[name] ?? '')}
+      source={sourceTools.data?.plugins[name]} canOpen={sourceTools.data?.canOpen === true}
+      onEdit={() => setEditingSource(name)} t={t} lang={lang} />
+  )
+
   const renderInstalledBlockMenu = (name: string) => {
     // The host's page for this bundle, when it offers one. It is the only
     // place a bundle's ROWS can be switched one by one, which is the reason
@@ -6269,6 +6282,7 @@ export function MarketSection(props: MarketSectionProps) {
   const ungroupedNames = groupableNames.filter(name => !groupedNames.has(name))
   const groupQuery = qInstalled.trim().toLowerCase()
   const matchesInstalledQuery = useCallback((name: string) => {
+    if (sourceFilter !== 'all' && (sourceTools.data?.plugins[name]?.category ?? sourceCategory(String(installed[name] ?? ''))) !== sourceFilter) return false
     if (groupQuery === '') return true
     if (name.toLowerCase().includes(groupQuery)) return true
     const note = notes[name]
@@ -6281,9 +6295,10 @@ export function MarketSection(props: MarketSectionProps) {
       if (desc.toLowerCase().includes(groupQuery)) return true
     }
     return false
-  }, [data, groupQuery, installed, lang, notes, repoHints, repoIdentities])
+  }, [data, groupQuery, installed, lang, notes, repoHints, repoIdentities, sourceFilter, sourceTools.data])
   const visibleUngrouped = ungroupedNames.filter(matchesInstalledQuery)
   const visibleGroupIds = groupOrder.filter(gid => {
+    if (sourceFilter !== 'all' && !(groups[gid] ?? []).some(matchesSource)) return false
     if (groupQuery === '') return true
     if (gid.toLowerCase().includes(groupQuery)) return true
     return (groups[gid] ?? []).some(matchesInstalledQuery)
@@ -7247,6 +7262,7 @@ export function MarketSection(props: MarketSectionProps) {
                   </div>
                   <div className={css.tabSearchRow}>
                     <SearchInput key="installed" resetToken={installedSearchReset} className={css.tabSearch} placeholder={t('searchPh')} value={qInstalled} onCommit={setQInstalled} t={t} />
+                    <SourceFilter value={sourceFilter} onChange={setSourceFilter} t={t} />
                     {installedView === 'groups' && (
                       creatingGroup
                         ? (
@@ -7266,6 +7282,7 @@ export function MarketSection(props: MarketSectionProps) {
                         : <Button variant="outline" size="sm" onClick={() => setCreatingGroup(true)}>{t('groupNew')}</Button>
                     )}
                   </div>
+                  {sourceTools.error !== '' && <div className={css.spec} role="alert">{t('sourceLoadFailed')} <Button variant="ghost" size="sm" onClick={sourceTools.refresh}>{t('retry')}</Button></div>}
                   {installedView === 'groups'
                       ? (
                           <>
@@ -7277,7 +7294,7 @@ export function MarketSection(props: MarketSectionProps) {
                                   const visibleMembers = (groupQuery === '' || nameHit
                                     ? members
                                     : members.filter(matchesInstalledQuery)
-                                  ).slice().sort((a, b) => Number(installedThemeNames.has(b)) - Number(installedThemeNames.has(a)))
+                                  ).filter(matchesSource).slice().sort((a, b) => Number(installedThemeNames.has(b)) - Number(installedThemeNames.has(a)))
                                   const themeSlot = visibleMembers.some(name => installedThemeNames.has(name)) && visibleMembers.some(name => !installedThemeNames.has(name))
                                   if (groupQuery !== '' && !nameHit && visibleMembers.length === 0) return null
                                   const switchableMembers = members.filter(member => activations[member]?.library !== true)
@@ -7382,7 +7399,7 @@ export function MarketSection(props: MarketSectionProps) {
                                           {visibleMembers.map(member => {
                                             const { note, shown } = installedBlurb(member)
                                             return (
-                                            <div className={installedThemeNames.has(member) && themeSlot ? `${css.groupMember} ${css.themeSlot}` : css.groupMember} key={member}>
+                                            <div className={`${css.groupMember} ${css.sourceMember}${installedThemeNames.has(member) && themeSlot ? ` ${css.themeSlot}` : ''}`} key={member}>
                                               <span className={shown !== '' ? `${css.memberName} ${css.memberNameWithDesc}` : css.memberName}>
                                                 <span className={css.nm}>{member}</span>
                                                 {installedThemeNames.has(member) && <span className={css.memberKind}>· {t('groupThemeBadge')}</span>}
@@ -7401,6 +7418,7 @@ export function MarketSection(props: MarketSectionProps) {
                                                 toggle: () => doToggle(member, effectiveDisabledSet.has(member)),
                                               })}
                                               <Button variant="ghost" size="sm" onClick={() => doRemoveMember(gid, member)}>{t('groupRemove')}</Button>
+                                              {renderSourceTools(member)}
                                             </div>
                                             )
                                           })}
@@ -7416,14 +7434,14 @@ export function MarketSection(props: MarketSectionProps) {
                                   <span className={css.groupName}>{t('ungrouped')}</span>
                                   <span className={css.groupMeta}>
                                     {t('groupMembersMeta')
-                                      .replace('{0}', String((groupQuery === '' ? ungroupedNames : visibleUngrouped).length))
-                                      .replace('{1}', String((groupQuery === '' ? ungroupedNames : visibleUngrouped).filter(name => activations[name]?.library !== true && !effectiveDisabledSet.has(name)).length))}
+                                      .replace('{0}', String(visibleUngrouped.length))
+                                      .replace('{1}', String(visibleUngrouped.filter(name => activations[name]?.library !== true && !effectiveDisabledSet.has(name)).length))}
                                   </span>
                                 </div>
                               </div>
                               <div className={css.groupMembers}>
-                                {(groupQuery === '' ? ungroupedNames : visibleUngrouped).length === 0
-                                  ? <div className={css.empty}>{t('installedEmpty')}</div>
+                                {visibleUngrouped.length === 0
+                                  ? <div className={css.empty}>{t(sourceFilter === 'all' ? 'installedEmpty' : 'sourceEmpty')}</div>
                                   : visibleUngrouped.map(name => {
                                       const { entry, note, shown } = installedBlurb(name)
                                       const act = activations[name]
@@ -7443,7 +7461,7 @@ export function MarketSection(props: MarketSectionProps) {
                                       const stateDot = off ? 'warning' as const : meta?.dot === 'error' ? 'error' as const : meta?.dot === 'warning' ? 'warning' as const : 'done' as const
                                       const stateClass = stateDot === 'error' ? css.actBroken : stateDot === 'warning' ? css.actWarn : css.actLive
                                       return (
-                                        <div className={`${css.groupMember} ${css.ungroupedRow}`} key={'ug-' + name}>
+                                        <div className={`${css.groupMember} ${css.ungroupedRow} ${css.sourceMember}`} key={'ug-' + name}>
                                           <span className={css.nm} title={name}>
                                             {name}
                                             {entry?.deprecated === true && <span className={css.depBadge}>{t('deprecatedBadge')}</span>}
@@ -7494,6 +7512,7 @@ export function MarketSection(props: MarketSectionProps) {
                                               })}
                                             />
                                           </div>
+                                          {renderSourceTools(name)}
                                         </div>
                                       )
                                     })}
@@ -7506,12 +7525,13 @@ export function MarketSection(props: MarketSectionProps) {
                             <p className={css.groupOrgHint}>{t('groupOrgHint')}</p>
                           </>
                         )
-                      : orderedInstalledEntries.length === 0
-                        ? <div className={css.empty}>{t('installedEmpty')}</div>
+                      : orderedInstalledEntries.filter(([name]) => matchesSource(name)).length === 0
+                        ? <div className={css.empty}>{t(sourceFilter === 'all' ? 'installedEmpty' : 'sourceEmpty')}</div>
                         : (
                           <Masonry
                             items={orderedInstalledEntries
                             .filter(([name, spec]) => {
+                              if (!matchesSource(name)) return false
                               const needle = qInstalled.trim().toLowerCase()
                               if (needle === '') return true
                               if (name.toLowerCase().includes(needle)) return true
@@ -7583,9 +7603,10 @@ export function MarketSection(props: MarketSectionProps) {
                                   </div>
                                   {(version !== '' || localDev) && (
                                     <div className={css.irowMeta}>
-                                      {[version, localDev ? t('linkedDev') : ''].filter(Boolean).join(' · ')}
+                                      {version}
                                     </div>
                                   )}
+                                  {renderSourceTools(name)}
                                   {specRedundant
                                     ? null
                                     : localPath !== null
@@ -7941,6 +7962,9 @@ export function MarketSection(props: MarketSectionProps) {
           </span>
         </Tooltip>
       )}
+      {editingSource !== null && <InstalledSourceEditor key={editingSource} name={editingSource}
+        source={sourceTools.data?.plugins[editingSource]} onSaved={sourceTools.refresh}
+        onClose={() => setEditingSource(null)} t={t} lang={lang} />}
       {renamingGroup !== null && (
         <Modal
           open

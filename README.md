@@ -4,6 +4,9 @@
 
 # dsh-market
 
+This locally maintained fork adds installed-plugin source categories and folder
+actions. See [FORK.md](FORK.md) for synchronization, testing and deployment notes.
+
 English | [中文](README.zh.md)
 
 [![npm](https://img.shields.io/npm/v/dshmarket)](https://www.npmjs.com/package/dshmarket)

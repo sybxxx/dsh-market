@@ -1,0 +1,15 @@
+/* The npm primitives export CSS stubs; supply representative host chrome for this fixture. */
+button{border:1px solid #555;border-radius:6px;background:#292929;color:inherit;padding:5px 9px;min-height:28px}
+button:disabled{opacity:.5;cursor:default}
+input{border:1px solid #555;border-radius:6px;background:#191919;color:inherit;padding:7px}
+[role=presentation]:has(>[role=dialog]){position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:16px}
+[role=presentation]:has(>[role=dialog])>[aria-hidden=true]{position:absolute;inset:0;background:#0008}
+[role=dialog]{position:relative;background:#242424;color:#ddd;border:1px solid #555;border-radius:8px;padding:20px;width:min(520px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow:auto;box-shadow:0 12px 50px #0005}
+[role=dialog] h2{font-size:16px;margin:0 0 18px;overflow-wrap:anywhere}
+[role=dialog]>div:last-child{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+[role=dialog] input{width:100%}
+[role=dialog] button[aria-label=Close]{position:absolute;right:10px;top:10px}
+html[data-theme=light],html[data-theme=light] body{background:#fff;color:#202124;--dsw-alias-label-primary:#202124;--dsw-alias-label-secondary:#666;--dsw-alias-label-tertiary:#777;--dsw-alias-bg-base:#fff;--dsw-alias-bg-layer-1:#fff;--dsw-alias-bg-layer-2:#f6f6f6;--dsw-alias-bg-module-platform:#eee;--dsw-alias-border-secondary:#ccc;--dsw-alias-settings-card-fill:#fff;--dsw-alias-settings-card-stroke:#ddd}
+html[data-theme=light] body{background:#fff;color:#202124}
+html[data-theme=light] button,html[data-theme=light] input,html[data-theme=light] [role=dialog]{background:#fff;color:#202124;border-color:#ccc}
+[role=tooltip]{position:fixed;max-width:240px;z-index:200;background:#333;color:#fff;border-radius:4px;padding:5px 8px;font-size:12px;pointer-events:none}

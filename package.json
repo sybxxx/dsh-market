@@ -1,7 +1,7 @@
 {
   "name": "dshmarket",
   "description": "Visual plugin market inside DeepSeek Harness — browse, search, and one-click install community plugins. · DSH 可视化插件市场：逛一逛，点一下，装好。",
-  "version": "1.70.2",
+  "version": "1.70.2-sybxxx.1",
   "icon": "assets/logo.svg",
   "type": "module",
   "main": "lib/index.js",
@@ -9,7 +9,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dsh-market/dsh-market.git"
+    "url": "git+https://github.com/sybxxx/dsh-market.git"
   },
   "homepage": "https://dshmarket.com",
   "keywords": [
@@ -22,6 +22,8 @@
     "plugin-manager"
   ],
   "scripts": {
+    "upstream:check": "node scripts/upstream-status.mjs",
+    "test:sources:browser": "node scripts/test-source-tools-browser.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.client.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
     "build": "tsc -p tsconfig.json && npm run build:client",
     "build:client": "tsdown && node scripts/normalize-client-banner.mjs",
@@ -79,6 +81,7 @@
     "src",
     "client",
     "UPDATE-API-V1.md",
+    "FORK.md",
     "cordis.patch.yml",
     "LICENSE"
   ],

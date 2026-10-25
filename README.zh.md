@@ -4,6 +4,9 @@
 
 # dsh-market
 
+本地维护版增加来源分类、安装目录与源码目录入口。
+上游同步、测试与安装注意事项见 [FORK.md](FORK.md)。
+
 [English](README.md) | 中文
 
 [![npm](https://img.shields.io/npm/v/dshmarket)](https://www.npmjs.com/package/dshmarket)
