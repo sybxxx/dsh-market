@@ -15,11 +15,16 @@ market (`1.66.47`). Building or testing this checkout does not install it.
 - To adopt updates, use a separate integration branch, merge the reviewed
   upstream release, resolve conflicts, then run the relevant tests and build.
   Keep the custom version suffix and fork repository metadata.
-- Do not use the existing external upstream market updater for this fork:
-  it installs the upstream npm release and would replace these customizations.
-  Before deploying this fork, protect that updater or give the fork its own
-  explicit update/install workflow. Do not change the running desktop profile
-  as part of source-only development.
+- Do not use the external upstream market updater to update this fork. The
+  maintained updater under the outer repository's `tools/dsh-market-updater/`
+  now refuses protected profiles, local install sources and fork metadata
+  before process control or installation. Its per-profile policy can also
+  protect a fork that is still being prepared. This is not a global filesystem
+  lock: manual package-manager commands or old script copies can bypass it.
+- Installation still requires a separate, explicit local-package workflow.
+  The adjacent `market-snapshot.cjs` makes a verified checkpoint without
+  stopping DSH. A running-app checkpoint does not authorize replacement or
+  restart; take a fresh checkpoint when actual installation is approved.
 
 ## Responsibilities
 
