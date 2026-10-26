@@ -425,6 +425,41 @@ window.__ModuleLoader__.load({ id: "dshmarket", factory: (require) => {
 			sourceMissing: "源码目录失效，请重新关联。",
 			sourceLoadFailed: "来源记录未能读取，请重试。",
 			sourceEmpty: "没有符合条件的插件。",
+			upstreamTitle: "上游跟踪",
+			upstreamSelf: "市场上游",
+			upstreamPendingTag: "上游待合并 {0}",
+			upstreamFollow: "关注上游更新",
+			upstreamRepository: "原项目 GitHub 仓库",
+			upstreamMode: "检查范围",
+			upstreamNpm: "npm 发布版",
+			upstreamBranch: "GitHub 分支",
+			upstreamPackage: "原项目 npm 包名",
+			upstreamBranchName: "跟踪分支",
+			upstreamBaseVersion: "已合并的上游版本",
+			upstreamBaseCommit: "已合并的上游提交（完整 SHA）",
+			upstreamBase: "已合并起点",
+			upstreamMissingBase: "尚未记录",
+			upstreamCheck: "检查上游",
+			upstreamChanges: "查看更新",
+			upstreamChecked: "检查时间",
+			upstreamExpired: "结果待复查",
+			upstreamStale: "等待重新检查",
+			upstreamCommits: "{0} 个上游提交待合并",
+			upstreamPreviousPending: "上次发现的更新仍未确认合并。",
+			upstreamPendingSummary: "{0} 个上游有更新待合并。定制版保持不变。",
+			upstreamState_unchecked: "上游尚未检查",
+			upstreamState_current: "已与跟踪范围同步",
+			upstreamState_updates: "上游有更新，待合并",
+			upstreamState_ahead: "已记录起点领先上游，请核对",
+			upstreamState_diverged: "上游历史已分叉，需人工核对",
+			"upstreamState_baseline-needed": "缺少已合并起点，暂不能比较",
+			upstreamState_error: "上游检查失败",
+			"upstreamError_network": "网络未能完成检查，请稍后重试。",
+			"upstreamError_rate-limit": "上游暂时限制请求，稍后再查。",
+			"upstreamError_not-found": "未找到仓库或提交，请核对关联。",
+			"upstreamError_invalid-data": "上游数据无法确认，请稍后重试。",
+			"upstreamError_repo-mismatch": "发布包与仓库不匹配，请核对关联。",
+			"upstreamError_storage": "本地检查记录无法读取，请检查文件。",
 			hostUpdateReady: "有新版本 {0}",
 			hostUpdateHint: "本市场由桌面端安装和更新，新版本请在桌面端更新",
 			notesLink: "更新内容",
@@ -1198,6 +1233,41 @@ window.__ModuleLoader__.load({ id: "dshmarket", factory: (require) => {
 			sourceMissing: "Source folder is unavailable. Relink it.",
 			sourceLoadFailed: "Source records could not be read. Retry.",
 			sourceEmpty: "No plugins match this category.",
+			upstreamTitle: "Upstream tracking",
+			upstreamSelf: "Market upstream",
+			upstreamPendingTag: "Upstream changes {0}",
+			upstreamFollow: "Follow upstream updates",
+			upstreamRepository: "Original GitHub repository",
+			upstreamMode: "Check scope",
+			upstreamNpm: "npm releases",
+			upstreamBranch: "GitHub branch",
+			upstreamPackage: "Original npm package",
+			upstreamBranchName: "Tracked branch",
+			upstreamBaseVersion: "Merged upstream version",
+			upstreamBaseCommit: "Merged upstream commit (full SHA)",
+			upstreamBase: "Merged baseline",
+			upstreamMissingBase: "Not recorded",
+			upstreamCheck: "Check upstream",
+			upstreamChanges: "View changes",
+			upstreamChecked: "Checked at",
+			upstreamExpired: "Recheck due",
+			upstreamStale: "Waiting to recheck",
+			upstreamCommits: "{0} upstream commits not yet merged",
+			upstreamPreviousPending: "Previously found updates have not been confirmed merged.",
+			upstreamPendingSummary: "{0} upstreams have changes to merge. Custom builds are unchanged.",
+			upstreamState_unchecked: "Upstream not checked",
+			upstreamState_current: "Synchronized within tracked scope",
+			upstreamState_updates: "Upstream updates awaiting merge",
+			upstreamState_ahead: "Recorded baseline is ahead; verify it",
+			upstreamState_diverged: "Upstream history diverged; review needed",
+			"upstreamState_baseline-needed": "Merged baseline missing; comparison unavailable",
+			upstreamState_error: "Upstream check failed",
+			upstreamError_network: "The network check did not complete. Retry later.",
+			"upstreamError_rate-limit": "Upstream requests are limited. Retry later.",
+			"upstreamError_not-found": "Repository or commit not found. Check the association.",
+			"upstreamError_invalid-data": "Upstream data could not be verified. Retry later.",
+			"upstreamError_repo-mismatch": "Package and repository do not match. Check the association.",
+			upstreamError_storage: "Local check records could not be read. Check the file.",
 			hostUpdateReady: "New version {0}",
 			hostUpdateHint: "Installed and updated by the desktop app; update it there.",
 			notesLink: "What changed",
@@ -4037,7 +4107,6 @@ window.__ModuleLoader__.load({ id: "dshmarket", factory: (require) => {
 		}
 		//#endregion
 		//#region src/plugin-provenance.ts
-		/** Display identity is independent of the package manager's install source. */
 		const SOURCE_CATEGORIES = [
 			"online",
 			"original",
@@ -4051,7 +4120,7 @@ window.__ModuleLoader__.load({ id: "dshmarket", factory: (require) => {
 		}
 		//#endregion
 		//#region \0dsh-css:src/client/InstalledSourceTools.module.css.mjs
-		const css = ".dxs4ta_root{flex-basis:100%;min-width:0;max-width:100%}.dxs4ta_row{flex-wrap:wrap;align-items:center;gap:2px;min-height:30px;display:flex}.dxs4ta_category{color:var(--dsw-alias-label-secondary,#6b7280);margin-right:6px;font-size:12px;line-height:18px}.dxs4ta_filter{border:1px solid var(--dsw-alias-border-secondary,#d1d5db);background:var(--dsw-alias-bg-base,#fff);max-width:100%;min-height:30px;color:var(--dsw-alias-label-primary,#202124);font:inherit;letter-spacing:0;border-radius:6px;padding:4px 24px 4px 8px;font-size:13px}.dxs4ta_editor{width:min(520px,100vw - 32px);max-width:calc(100vw - 32px);max-height:calc(100vh - 32px);overflow:auto}.dxs4ta_form{grid-template-columns:minmax(0,1fr);gap:16px;min-width:0;display:grid}.dxs4ta_form label{gap:6px;font-size:13px;display:grid}.dxs4ta_path{overflow-wrap:anywhere;white-space:pre-wrap;font:12px/1.5 monospace}.dxs4ta_label,.dxs4ta_notice{color:var(--dsw-alias-label-secondary,#6b7280);font-size:12px;line-height:18px}.dxs4ta_error{color:var(--dsw-alias-error-label,#c2413b);overflow-wrap:anywhere;font-size:12px;line-height:18px}";
+		const css = ".dxs4ta_root{flex-basis:100%;min-width:0;max-width:100%}.dxs4ta_row{flex-wrap:wrap;align-items:center;gap:2px;min-height:30px;display:flex}.dxs4ta_category{color:var(--dsw-alias-label-secondary,#6b7280);margin-right:6px;font-size:12px;line-height:18px}.dxs4ta_filter{border:1px solid var(--dsw-alias-border-secondary,#d1d5db);background:var(--dsw-alias-bg-base,#fff);max-width:100%;min-height:30px;color:var(--dsw-alias-label-primary,#202124);font:inherit;letter-spacing:0;border-radius:6px;padding:4px 24px 4px 8px;font-size:13px}.dxs4ta_editor{width:min(520px,100vw - 32px);max-width:calc(100vw - 32px);max-height:calc(100vh - 32px);overflow:auto}.dxs4ta_form{grid-template-columns:minmax(0,1fr);gap:16px;min-width:0;display:grid}.dxs4ta_form label{gap:6px;font-size:13px;display:grid}.dxs4ta_path{overflow-wrap:anywhere;white-space:pre-wrap;font:12px/1.5 monospace}.dxs4ta_label,.dxs4ta_notice{color:var(--dsw-alias-label-secondary,#6b7280);font-size:12px;line-height:18px}.dxs4ta_error{color:var(--dsw-alias-error-label,#c2413b);overflow-wrap:anywhere;font-size:12px;line-height:18px}.dxs4ta_upstream{border-top:1px solid var(--dsw-alias-border-secondary,#d1d5db);overflow-wrap:anywhere;min-width:0;margin-top:6px;padding-top:4px}.dxs4ta_upstream a{color:var(--dsw-alias-state-business-primary,#0b7285);font-size:12px;line-height:18px}.dxs4ta_upstreamPending{color:var(--dsw-alias-state-warn-primary,#9a6500);font-size:12px;line-height:18px}.dxs4ta_upstreamFields{border:0;border-top:1px solid var(--dsw-alias-border-secondary,#d1d5db);grid-template-columns:minmax(0,1fr);gap:12px;min-width:0;margin:0;padding:12px 0 0;display:grid}.dxs4ta_upstreamFields legend{padding:0 8px 0 0;font-size:13px;font-weight:600}.dxs4ta_upstreamFields .dxs4ta_toggle{align-items:center;gap:8px;display:flex}.dxs4ta_upstreamFields .dxs4ta_toggle input{flex:none;width:16px;height:16px;margin:0}";
 		const tagId = "dshmarket/InstalledSourceTools.module.css";
 		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId) + "]") === null) {
 			const tag = document.createElement("style");
@@ -4070,8 +4139,198 @@ window.__ModuleLoader__.load({ id: "dshmarket", factory: (require) => {
 			"notice": "dxs4ta_notice",
 			"path": "dxs4ta_path",
 			"root": "dxs4ta_root",
-			"row": "dxs4ta_row"
+			"row": "dxs4ta_row",
+			"toggle": "dxs4ta_toggle",
+			"upstream": "dxs4ta_upstream",
+			"upstreamFields": "dxs4ta_upstreamFields",
+			"upstreamPending": "dxs4ta_upstreamPending"
 		};
+		//#endregion
+		//#region src/upstream-types.ts
+		const SHA = /^[0-9a-f]{40}$/i;
+		function upstreamHasPending(view) {
+			const result = view?.result.state === "error" ? view.previousSuccess : view?.result;
+			return result?.state === "updates" || result?.state === "diverged";
+		}
+		function upstreamLink(tracking, result) {
+			if (tracking.mode === "npm") return `https://www.npmjs.com/package/${encodeURIComponent(tracking.packageName)}`;
+			if (tracking.baseCommit && result?.latest && SHA.test(result.latest)) return `https://github.com/${tracking.repository}/compare/${tracking.baseCommit}...${result.latest}`;
+			return `https://github.com/${tracking.repository}/commits/${encodeURIComponent(tracking.branch)}`;
+		}
+		//#endregion
+		//#region src/client/UpstreamTools.tsx
+		function UpstreamFields({ value, onChange, disabled, t }) {
+			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("fieldset", {
+				className: InstalledSourceTools_module_css_default.upstreamFields,
+				disabled,
+				children: [
+					/* @__PURE__ */ (0, react_jsx_runtime.jsx)("legend", { children: t("upstreamTitle") }),
+					/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("label", {
+						className: InstalledSourceTools_module_css_default.toggle,
+						children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("input", {
+							type: "checkbox",
+							checked: value !== void 0,
+							onChange: (event) => onChange(event.target.checked ? {
+								repository: "",
+								mode: "npm",
+								packageName: ""
+							} : void 0)
+						}), t("upstreamFollow")]
+					}),
+					value !== void 0 && /* @__PURE__ */ (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [
+						/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("label", { children: [t("upstreamRepository"), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Input, {
+							value: value.repository,
+							maxLength: 220,
+							onChange: (event) => onChange({
+								...value,
+								repository: event.target.value
+							})
+						})] }),
+						/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("label", { children: [t("upstreamMode"), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("select", {
+							className: InstalledSourceTools_module_css_default.filter,
+							value: value.mode,
+							onChange: (event) => onChange({
+								...value,
+								mode: event.target.value
+							}),
+							children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("option", {
+								value: "npm",
+								children: t("upstreamNpm")
+							}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("option", {
+								value: "branch",
+								children: t("upstreamBranch")
+							})]
+						})] }),
+						value.mode === "npm" ? /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("label", { children: [t("upstreamPackage"), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Input, {
+							value: value.packageName ?? "",
+							maxLength: 214,
+							onChange: (event) => onChange({
+								...value,
+								packageName: event.target.value
+							})
+						})] }) : /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("label", { children: [t("upstreamBranchName"), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Input, {
+							value: value.branch ?? "",
+							maxLength: 256,
+							onChange: (event) => onChange({
+								...value,
+								branch: event.target.value
+							})
+						})] }),
+						/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("label", { children: [t("upstreamBaseVersion"), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Input, {
+							value: value.baseVersion ?? "",
+							maxLength: 128,
+							onChange: (event) => onChange({
+								...value,
+								baseVersion: event.target.value
+							})
+						})] }),
+						/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("label", { children: [t("upstreamBaseCommit"), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Input, {
+							value: value.baseCommit ?? "",
+							maxLength: 40,
+							onChange: (event) => onChange({
+								...value,
+								baseCommit: event.target.value
+							})
+						})] })
+					] })
+				]
+			});
+		}
+		function UpstreamObservation({ name, tracking, status, onRefresh, t, lang }) {
+			const [busy, setBusy] = (0, react.useState)(false);
+			const [error, setError] = (0, react.useState)("");
+			const result = status?.result ?? { state: "unchecked" };
+			const baseline = tracking.mode === "npm" ? tracking.baseVersion : tracking.baseCommit?.slice(0, 7);
+			const latest = tracking.mode === "branch" ? result.latest?.slice(0, 7) : result.latest;
+			const previous = result.state === "error" && ["updates", "diverged"].includes(status?.previousSuccess?.state ?? "");
+			const key = status?.stale && result.state === "current" ? "upstreamStale" : "upstreamState_" + result.state;
+			const checkedAt = result.checkedAt && Number.isFinite(Date.parse(result.checkedAt)) ? new Date(result.checkedAt).toLocaleString(lang === "zh" ? "zh-CN" : "en-US") : null;
+			const check = async () => {
+				if (busy || status?.checking) return;
+				setBusy(true);
+				setError("");
+				try {
+					const response = await fetch(api("/dsh-market/check-upstream"), {
+						method: "POST",
+						headers: { "content-type": "application/json" },
+						body: JSON.stringify({ name })
+					});
+					const body = await response.json();
+					if (!response.ok || body.ok !== true) throw new Error(body.error || `HTTP ${response.status}`);
+					onRefresh();
+				} catch (error) {
+					setError(localizeBilingual(String(error.message), lang));
+				} finally {
+					setBusy(false);
+				}
+			};
+			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+				className: InstalledSourceTools_module_css_default.upstream,
+				"data-upstream": name,
+				children: [
+					/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+						className: InstalledSourceTools_module_css_default.row,
+						children: [
+							/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
+								className: result.state === "updates" || result.state === "diverged" ? InstalledSourceTools_module_css_default.upstreamPending : InstalledSourceTools_module_css_default.label,
+								children: [t(key), latest ? ` · ${latest}` : ""]
+							}),
+							/* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Tooltip, {
+								label: t("upstreamCheck"),
+								children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", { children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Button, {
+									variant: "ghost",
+									size: "sm",
+									"aria-label": `${t("upstreamCheck")} ${name}`,
+									disabled: busy || status?.checking === true,
+									onClick: check,
+									icon: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(IconRefreshOutline14, { size: 14 })
+								}) })
+							}),
+							/* @__PURE__ */ (0, react_jsx_runtime.jsx)("a", {
+								href: upstreamLink(tracking, result),
+								target: "_blank",
+								rel: "noreferrer",
+								children: t("upstreamChanges")
+							})
+						]
+					}),
+					/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+						className: InstalledSourceTools_module_css_default.label,
+						children: [
+							t("upstreamBase"),
+							baseline ? ` · ${baseline}` : ` · ${t("upstreamMissingBase")}`,
+							tracking.mode === "branch" ? ` · ${tracking.branch}` : ""
+						]
+					}),
+					result.aheadBy !== void 0 && result.aheadBy > 0 && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
+						className: InstalledSourceTools_module_css_default.label,
+						children: t("upstreamCommits").replace("{0}", String(result.aheadBy))
+					}),
+					checkedAt && /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+						className: InstalledSourceTools_module_css_default.label,
+						children: [
+							t("upstreamChecked"),
+							" · ",
+							checkedAt,
+							status?.stale ? ` · ${t("upstreamExpired")}` : ""
+						]
+					}),
+					result.state === "error" && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
+						className: InstalledSourceTools_module_css_default.error,
+						children: t("upstreamError_" + (result.error ?? "network"))
+					}),
+					previous && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
+						className: InstalledSourceTools_module_css_default.label,
+						children: t("upstreamPreviousPending")
+					}),
+					error && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
+						className: InstalledSourceTools_module_css_default.error,
+						role: "alert",
+						children: error
+					})
+				]
+			});
+		}
 		//#endregion
 		//#region src/client/InstalledSourceTools.tsx
 		const sourceLabel = (category) => "source" + category.charAt(0).toUpperCase() + category.slice(1);
@@ -4080,6 +4339,21 @@ window.__ModuleLoader__.load({ id: "dshmarket", factory: (require) => {
 			const [error, setError] = (0, react.useState)("");
 			const [revision, setRevision] = (0, react.useState)(0);
 			const identity = JSON.stringify(installed);
+			const followsUpstream = Object.values(data?.plugins ?? {}).some((plugin) => plugin.upstream !== void 0);
+			(0, react.useEffect)(() => {
+				if (!followsUpstream) return;
+				const poll = setInterval(() => {
+					if (!document.hidden) setRevision((value) => value + 1);
+				}, 6e4);
+				const visible = () => {
+					if (!document.hidden) setRevision((value) => value + 1);
+				};
+				document.addEventListener("visibilitychange", visible);
+				return () => {
+					clearInterval(poll);
+					document.removeEventListener("visibilitychange", visible);
+				};
+			}, [followsUpstream]);
 			(0, react.useEffect)(() => {
 				const controller = new AbortController();
 				fetch(api("/dsh-market/installed-tools"), {
@@ -4127,7 +4401,7 @@ window.__ModuleLoader__.load({ id: "dshmarket", factory: (require) => {
 			const result = await response.json();
 			if (!response.ok || result.ok !== true) throw new Error(result.error || `HTTP ${response.status}`);
 		}
-		function InstalledSourceTools({ name, spec, source, canOpen, onEdit, t, lang }) {
+		function InstalledSourceTools({ name, spec, source, canOpen, onEdit, onRefresh = () => {}, t, lang }) {
 			const [busy, setBusy] = (0, react.useState)(false);
 			const [error, setError] = (0, react.useState)("");
 			const [notice, setNotice] = (0, react.useState)("");
@@ -4196,6 +4470,14 @@ window.__ModuleLoader__.load({ id: "dshmarket", factory: (require) => {
 						className: InstalledSourceTools_module_css_default.notice,
 						role: "status",
 						children: notice
+					}),
+					source?.upstream && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(UpstreamObservation, {
+						name,
+						tracking: source.upstream,
+						status: source.upstreamStatus,
+						onRefresh,
+						t,
+						lang
 					})
 				]
 			});
@@ -4204,6 +4486,8 @@ window.__ModuleLoader__.load({ id: "dshmarket", factory: (require) => {
 		function InstalledSourceEditor({ name, source, onSaved, onClose, t, lang }) {
 			const [choice, setChoice] = (0, react.useState)(source?.choice ?? "auto");
 			const [directory, setDirectory] = (0, react.useState)(source?.sourceDirectory ?? "");
+			const [upstream, setUpstream] = (0, react.useState)(source?.upstream);
+			const [expectedUpstream] = (0, react.useState)(source?.upstream ?? null);
 			const [busy, setBusy] = (0, react.useState)(false);
 			const [error, setError] = (0, react.useState)("");
 			const save = async () => {
@@ -4214,7 +4498,9 @@ window.__ModuleLoader__.load({ id: "dshmarket", factory: (require) => {
 					await postSource(api("/dsh-market/plugin-provenance"), {
 						name,
 						category: choice,
-						sourceDirectory: directory
+						sourceDirectory: directory,
+						upstream: upstream ?? null,
+						expectedUpstream
 					});
 					onSaved();
 					onClose();
@@ -4264,6 +4550,12 @@ window.__ModuleLoader__.load({ id: "dshmarket", factory: (require) => {
 							onChange: (event) => setDirectory(event.target.value),
 							disabled: busy
 						})] }),
+						/* @__PURE__ */ (0, react_jsx_runtime.jsx)(UpstreamFields, {
+							value: upstream,
+							onChange: setUpstream,
+							disabled: busy,
+							t
+						}),
 						source?.sourceMissing === true && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
 							role: "alert",
 							className: InstalledSourceTools_module_css_default.error,
@@ -12354,6 +12646,8 @@ window.__ModuleLoader__.load({ id: "dshmarket", factory: (require) => {
 			]);
 			const missingRestoreCount = Object.keys(pendingDependencies).filter((name) => !installedFiles.includes(name)).length;
 			const hasUpdates = reminderUpdatableNames.length > 0;
+			const upstreamPendingCount = Object.values(sourceTools.data?.plugins ?? {}).filter((plugin) => upstreamHasPending(plugin.upstreamStatus)).length;
+			const selfUpstream = sourceTools.data?.plugins[selfName];
 			/** Live status line: structured phase, or the human-line fallback. */
 			const phasePart = progressPhase != null ? phaseLabel(progressPhase, t) + (progressCurrent !== null ? " · " + progressCurrent : "") + (progressDone > 0 ? " · " + t("packagesDone").replace("{0}", String(progressDone)) : "") : progressLine || t("progressHint");
 			const progressText = cancelling ? t("cancelling") + " · " + phasePart : phasePart;
@@ -12417,6 +12711,7 @@ window.__ModuleLoader__.load({ id: "dshmarket", factory: (require) => {
 				source: sourceTools.data?.plugins[name],
 				canOpen: sourceTools.data?.canOpen === true,
 				onEdit: () => setEditingSource(name),
+				onRefresh: sourceTools.refresh,
 				t,
 				lang
 			});
@@ -13356,6 +13651,16 @@ window.__ModuleLoader__.load({ id: "dshmarket", factory: (require) => {
 											title: t("versionHint"),
 											children: ["v", version]
 										}),
+										selfUpstream !== void 0 && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Tooltip, {
+											label: t("upstreamSelf"),
+											children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", { children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Button, {
+												variant: "ghost",
+												size: "sm",
+												"aria-label": t("upstreamSelf"),
+												icon: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(IconCodeOutline16, { size: 14 }),
+												onClick: () => setEditingSource(selfName)
+											}) })
+										}),
 										/* @__PURE__ */ (0, react_jsx_runtime.jsx)("a", {
 											className: Market_module_css_default.submitLink,
 											href: "https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/blob/main/contributing.md",
@@ -13406,6 +13711,14 @@ window.__ModuleLoader__.load({ id: "dshmarket", factory: (require) => {
 									]
 								})]
 							}),
+							selfUpstream?.upstream && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(UpstreamObservation, {
+								name: selfName,
+								tracking: selfUpstream.upstream,
+								status: selfUpstream.upstreamStatus,
+								onRefresh: sourceTools.refresh,
+								t,
+								lang
+							}),
 							showSidebarTip && /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
 								className: Market_module_css_default.sidebarTip,
 								children: [
@@ -13454,11 +13767,19 @@ window.__ModuleLoader__.load({ id: "dshmarket", factory: (require) => {
 											setTab("installed");
 											refreshInstalled(true);
 										},
-										children: [t("tabInstalled") + (installedOtherCount > 0 ? " (" + installedOtherCount + ")" : ""), hasUpdates && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.StateDot, {
-											state: "error",
-											size: 7,
-											className: Market_module_css_default.dot
-										})]
+										children: [
+											t("tabInstalled") + (installedOtherCount > 0 ? " (" + installedOtherCount + ")" : ""),
+											hasUpdates && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.StateDot, {
+												state: "error",
+												size: 7,
+												className: Market_module_css_default.dot
+											}),
+											upstreamPendingCount > 0 && /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
+												className: Market_module_css_default.spec,
+												title: t("upstreamTitle"),
+												children: [" · ", t("upstreamPendingTag").replace("{0}", String(upstreamPendingCount))]
+											})
+										]
 									}),
 									/* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
 										className: tab === "blocked" ? `${Market_module_css_default.tab} ${Market_module_css_default.on}` : Market_module_css_default.tab,
@@ -14530,6 +14851,10 @@ window.__ModuleLoader__.load({ id: "dshmarket", factory: (require) => {
 										children: t("retry")
 									})
 								]
+							}),
+							upstreamPendingCount > 0 && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
+								className: Market_module_css_default.spec,
+								children: t("upstreamPendingSummary").replace("{0}", String(upstreamPendingCount))
 							}),
 							installedView === "groups" ? /* @__PURE__ */ (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [
 								groupQuery === "" && groupOrder.length === 0 ? /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {

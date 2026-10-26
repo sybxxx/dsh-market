@@ -4,6 +4,8 @@ import { IconCodeOutline16, IconFolderOpen16 } from './icons.ts'
 import { api, localizeBilingual, type Translate } from './market-data.ts'
 import { SOURCE_CATEGORIES, sourceCategory, type InstalledSource, type InstalledSources, type SourceCategory, type SourceChoice } from '../plugin-provenance.ts'
 import css from './InstalledSourceTools.module.css'
+import { UpstreamFields, UpstreamObservation } from './UpstreamTools.tsx'
+import type { UpstreamTracking } from '../upstream-types.ts'
 
 export const sourceLabel = (category: SourceCategory): string => 'source' + category.charAt(0).toUpperCase() + category.slice(1)
 
@@ -12,6 +14,14 @@ export function useInstalledSources(installed: Record<string, string>) {
   const [error, setError] = useState('')
   const [revision, setRevision] = useState(0)
   const identity = JSON.stringify(installed)
+  const followsUpstream = Object.values(data?.plugins ?? {}).some(plugin => plugin.upstream !== undefined)
+  useEffect(() => {
+    if (!followsUpstream) return
+    const poll = setInterval(() => { if (!document.hidden) setRevision(value => value + 1) }, 60_000)
+    const visible = () => { if (!document.hidden) setRevision(value => value + 1) }
+    document.addEventListener('visibilitychange', visible)
+    return () => { clearInterval(poll); document.removeEventListener('visibilitychange', visible) }
+  }, [followsUpstream])
   useEffect(() => {
     const controller = new AbortController()
     fetch(api('/dsh-market/installed-tools'), { cache: 'no-store', signal: controller.signal })
@@ -41,9 +51,9 @@ async function postSource(route: string, body: unknown) {
   if (!response.ok || result.ok !== true) throw new Error(result.error || `HTTP ${response.status}`)
 }
 
-export function InstalledSourceTools({ name, spec, source, canOpen, onEdit, t, lang }: {
+export function InstalledSourceTools({ name, spec, source, canOpen, onEdit, onRefresh = () => {}, t, lang }: {
   name: string; spec: string; source?: InstalledSource; canOpen: boolean
-  onEdit(): void; t: Translate; lang: 'zh' | 'en'
+  onEdit(): void; onRefresh?(): void; t: Translate; lang: 'zh' | 'en'
 }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -73,6 +83,7 @@ export function InstalledSourceTools({ name, spec, source, canOpen, onEdit, t, l
     </div>
     {error !== '' && <div className={css.error} role="alert">{error}</div>}
     {notice !== '' && <div className={css.notice} role="status">{notice}</div>}
+    {source?.upstream && <UpstreamObservation name={name} tracking={source.upstream} status={source.upstreamStatus} onRefresh={onRefresh} t={t} lang={lang} />}
   </div>
 }
 
@@ -82,13 +93,15 @@ export function InstalledSourceEditor({ name, source, onSaved, onClose, t, lang 
 }) {
   const [choice, setChoice] = useState<SourceChoice>(source?.choice ?? 'auto')
   const [directory, setDirectory] = useState(source?.sourceDirectory ?? '')
+  const [upstream, setUpstream] = useState<UpstreamTracking | undefined>(source?.upstream)
+  const [expectedUpstream] = useState(source?.upstream ?? null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const save = async () => {
     if (busy) return
     setBusy(true); setError('')
     try {
-      await postSource(api('/dsh-market/plugin-provenance'), { name, category: choice, sourceDirectory: directory })
+      await postSource(api('/dsh-market/plugin-provenance'), { name, category: choice, sourceDirectory: directory, upstream: upstream ?? null, expectedUpstream })
       onSaved(); onClose()
     } catch (error) { setError(localizeBilingual(String((error as Error).message), lang)) }
     finally { setBusy(false) }
@@ -103,6 +116,7 @@ export function InstalledSourceEditor({ name, source, onSaved, onClose, t, lang 
           {SOURCE_CATEGORIES.filter(category => category !== 'unclassified').map(category => <option value={category} key={category}>{t(sourceLabel(category))}</option>)}
         </select></label>
         <label>{t('sourceDirectory')}<Input value={directory} maxLength={2048} onChange={event => setDirectory(event.target.value)} disabled={busy} /></label>
+        <UpstreamFields value={upstream} onChange={setUpstream} disabled={busy} t={t} />
         {source?.sourceMissing === true && <div role="alert" className={css.error}>{t('sourceMissing')}</div>}
         {source?.installedDirectory !== undefined && <div><div className={css.label}>{t('sourceInstalledDirectory')}</div><div className={css.path}>{source.installedDirectory}</div></div>}
         {source?.archive !== undefined && <div><div className={css.label}>{t('sourceArchive')}</div><div className={css.path}>{source.archive}</div></div>}

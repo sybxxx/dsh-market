@@ -44,6 +44,8 @@ import { CommentsModal } from './CommentsModal.tsx'
 import { SearchInput } from './SearchInput.tsx'
 import { InstalledSourceEditor, InstalledSourceTools, SourceFilter, useInstalledSources } from './InstalledSourceTools.tsx'
 import { sourceCategory, type SourceCategory } from '../plugin-provenance.ts'
+import { upstreamHasPending } from '../upstream-types.ts'
+import { UpstreamObservation } from './UpstreamTools.tsx'
 import { downloadStatsText } from './download-stats.ts'
 import { OperationsPanel } from './OperationsPanel.tsx'
 import { applyRecovery, fetchRecovery, initialKeep, RecoveryPanel, watchRestart, type RecoveryView } from './RecoveryPanel.tsx'
@@ -5479,6 +5481,8 @@ export function MarketSection(props: MarketSectionProps) {
   // tab's row list (the market itself is filtered out below) — so a pending
   // self-update alone must not light up a dot pointing at an empty-looking tab.
   const hasUpdates = reminderUpdatableNames.length > 0
+  const upstreamPendingCount = Object.values(sourceTools.data?.plugins ?? {}).filter(plugin => upstreamHasPending(plugin.upstreamStatus)).length
+  const selfUpstream = sourceTools.data?.plugins[selfName]
 
   /** Live status line: structured phase, or the human-line fallback. */
   const phasePart = progressPhase != null
@@ -5552,7 +5556,7 @@ export function MarketSection(props: MarketSectionProps) {
   const renderSourceTools = (name: string) => (
     <InstalledSourceTools name={name} spec={String(installed[name] ?? '')}
       source={sourceTools.data?.plugins[name]} canOpen={sourceTools.data?.canOpen === true}
-      onEdit={() => setEditingSource(name)} t={t} lang={lang} />
+      onEdit={() => setEditingSource(name)} onRefresh={sourceTools.refresh} t={t} lang={lang} />
   )
 
   const renderInstalledBlockMenu = (name: string) => {
@@ -6374,6 +6378,7 @@ export function MarketSection(props: MarketSectionProps) {
               find the repo it came from. */}
           <a className={css.repoLink} href="https://github.com/dsh-market/dsh-market" target="_blank" rel="noreferrer" title="dsh-market · GitHub">dsh-market</a>
           {version !== null && <span className={css.version} title={t('versionHint')}>v{version}</span>}
+          {selfUpstream !== undefined && <Tooltip label={t('upstreamSelf')}><span><Button variant="ghost" size="sm" aria-label={t('upstreamSelf')} icon={<IconCodeOutline16 size={14} />} onClick={() => setEditingSource(selfName)} /></span></Tooltip>}
           <a className={css.submitLink} href="https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/blob/main/contributing.md" target="_blank" rel="noreferrer">{t('submitPlugin')}</a>
           <Button
             variant="ghost"
@@ -6418,6 +6423,7 @@ export function MarketSection(props: MarketSectionProps) {
           )}
           </div>
         </div>
+        {selfUpstream?.upstream && <UpstreamObservation name={selfName} tracking={selfUpstream.upstream} status={selfUpstream.upstreamStatus} onRefresh={sourceTools.refresh} t={t} lang={lang} />}
         {showSidebarTip && (
           <div className={css.sidebarTip}>
             <span>{t('sidebarTip')}</span>
@@ -6449,6 +6455,7 @@ export function MarketSection(props: MarketSectionProps) {
           <button className={tab === 'installed' ? `${css.tab} ${css.on}` : css.tab} onClick={() => { setTab('installed'); refreshInstalled(true) }}>
             {t('tabInstalled') + (installedOtherCount > 0 ? ' (' + installedOtherCount + ')' : '')}
             {hasUpdates && <StateDot state="error" size={7} className={css.dot} />}
+            {upstreamPendingCount > 0 && <span className={css.spec} title={t('upstreamTitle')}> · {t('upstreamPendingTag').replace('{0}', String(upstreamPendingCount))}</span>}
           </button>
           <button className={tab === 'blocked' ? `${css.tab} ${css.on}` : css.tab} onClick={() => setTab('blocked')}>
             {t('tabBlocked') + (blockedNames.length > 0 ? ' (' + blockedNames.length + ')' : '')}
@@ -7283,6 +7290,7 @@ export function MarketSection(props: MarketSectionProps) {
                     )}
                   </div>
                   {sourceTools.error !== '' && <div className={css.spec} role="alert">{t('sourceLoadFailed')} <Button variant="ghost" size="sm" onClick={sourceTools.refresh}>{t('retry')}</Button></div>}
+                  {upstreamPendingCount > 0 && <div className={css.spec}>{t('upstreamPendingSummary').replace('{0}', String(upstreamPendingCount))}</div>}
                   {installedView === 'groups'
                       ? (
                           <>

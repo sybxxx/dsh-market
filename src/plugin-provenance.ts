@@ -1,4 +1,5 @@
 /** Display identity is independent of the package manager's install source. */
+import type { UpstreamTracking, UpstreamView } from './upstream-types.ts'
 export const SOURCE_CATEGORIES = ['online', 'original', 'modified', 'unclassified'] as const
 export type SourceCategory = typeof SOURCE_CATEGORIES[number]
 export type SourceChoice = 'auto' | Exclude<SourceCategory, 'unclassified'>
@@ -6,6 +7,7 @@ export type SourceChoice = 'auto' | Exclude<SourceCategory, 'unclassified'>
 export interface PluginProvenance {
   category?: Exclude<SourceCategory, 'unclassified'>
   sourceDirectory?: string
+  upstream?: UpstreamTracking
 }
 
 export interface InstalledSource {
@@ -15,6 +17,8 @@ export interface InstalledSource {
   installedDirectory?: string
   archive?: string
   sourceMissing?: boolean
+  upstream?: UpstreamTracking
+  upstreamStatus?: UpstreamView
 }
 
 export interface InstalledSources {

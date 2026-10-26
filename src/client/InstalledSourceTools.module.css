@@ -8,3 +8,10 @@
 .path{font:12px/1.5 monospace;overflow-wrap:anywhere;white-space:pre-wrap}
 .label,.notice{font-size:12px;line-height:18px;color:var(--dsw-alias-label-secondary,#6b7280)}
 .error{font-size:12px;line-height:18px;color:var(--dsw-alias-error-label,#c2413b);overflow-wrap:anywhere}
+.upstream{border-top:1px solid var(--dsw-alias-border-secondary,#d1d5db);margin-top:6px;padding-top:4px;min-width:0;overflow-wrap:anywhere}
+.upstream a{font-size:12px;line-height:18px;color:var(--dsw-alias-state-business-primary,#0b7285)}
+.upstreamPending{font-size:12px;line-height:18px;color:var(--dsw-alias-state-warn-primary,#9a6500)}
+.upstreamFields{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;min-width:0;border:0;border-top:1px solid var(--dsw-alias-border-secondary,#d1d5db);margin:0;padding:12px 0 0}
+.upstreamFields legend{font-size:13px;font-weight:600;padding:0 8px 0 0}
+.upstreamFields .toggle{display:flex;align-items:center;gap:8px}
+.upstreamFields .toggle input{width:16px;height:16px;flex:none;margin:0}

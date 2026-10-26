@@ -53,6 +53,70 @@ upstream updater still refuses to replace this local installation.
 - `src/installed-management.ts`: three host routes and the durable metadata file.
 - `src/client/InstalledSourceTools.tsx`: source editor, folder actions, and
   category filter shared by installed cards and grouped rows.
+- `src/provenance-store.ts`: versioned local association storage. The original
+  `installed-management.ts` exports remain compatible for existing callers.
+- `src/upstream-types.ts`: shared explicit upstream identity and baseline.
+- `src/upstream-network.ts`: bounded public npm/GitHub metadata reads.
+- `src/upstream-tracker.ts`: persisted observations, cooldowns, scheduled checks
+  and cancellation. It never invokes Git, pnpm, merge, install or restart.
+- `src/client/UpstreamTools.tsx`: association fields and read-only observations.
+
+## Upstream Tracking (1.70.2-sybxxx.2)
+
+This is a development update, not an automatic replacement of the installed
+desktop market. A user explicitly links the original GitHub repository and
+selects either its npm release package or a GitHub branch. Both can record
+the last merged version and full 40-character upstream commit; npm comparison
+uses the recorded version, and branch comparison uses the recorded commit.
+The custom installed version is never the baseline. Missing baselines remain
+unknown, rather than being initialized to the current latest version.
+
+The market's own association is reachable from the header's Market upstream
+icon even though the market itself is excluded from the installed-card grid.
+Observations appear in cards and grouped rows; pending upstream changes have
+their own count. They do not enter Update all or authorize an online restore.
+Checking never advances a baseline. Updating that record after an actual
+verified merge is a separate explicit edit. Stale editors are refused when
+another window has changed the upstream association.
+
+The host checks explicitly linked, currently installed packages 15 seconds
+after mounting, then sweeps every 30 minutes. A successful observation is
+fresh for six hours; failed checks wait 30 minutes. Explicit checks have a
+one-minute minimum interval. At most 32 associations and two simultaneous
+checks are allowed. Each inspection has a total 15-second deadline and at
+most two requests; response bodies are capped at 2 MiB. Checks stop and abort
+in-flight reads when the market is disposed. The client polls saved results
+once a minute while visible and linked; it does not issue external requests.
+
+Metadata reads use the existing `marketFetch` proxy transport and fixed
+official origins: registry.npmjs.org and api.github.com. npm metadata must
+declare both the configured package name and the configured GitHub repository.
+Redirects, arbitrary hosts, credentials in URLs and unsupported identities are
+refused. No GitHub token is read or stored. npm mode follows `latest`, not
+unpublished commits; branch mode compares an immutable fetched head with the
+saved commit using GitHub's ancestry response. Diverged/ahead histories are
+not advertised as synchronized or automatically mergeable. See the
+[GitHub commit/compare contract](https://docs.github.com/en/rest/commits/commits)
+and [npm metadata contract](https://github.com/npm/registry/blob/main/docs/responses/package-metadata.md).
+
+`plugin-provenance.json` retains optional `upstream` fields in its version-1
+records. Observations are separate in `.dsh-market/upstream-checks.json`, keyed
+to the complete association and baseline. A changed or removed association
+invalidates stale responses. Atomic read/modify/write updates keep concurrent
+checks for different plugins from overwriting one another. Unknown or corrupt
+records fail visibly, without silently resetting the file. Rate-limit backoff
+is capped at one day and survives restart. Generic failures never become
+"current"; the previous pending result remains visible, labeled as previous.
+Expired successes are labeled as awaiting a recheck.
+If disk storage fails, the current process shows a storage error and observes
+the same cooldown in memory; it cannot promise to retain that failed attempt
+across a restart. The previous on-disk file is not replaced or reset.
+
+Existing metadata without an upstream field remains valid and sends no new
+external requests. Downgrading to the previous custom build can strip these
+new fields when its older source editor saves a record: back up metadata
+before a downgrade. No automatic migration or edit of the maintainer's live
+plugin settings is performed during development.
 
 Categories are display metadata, not package-manager instructions. Local
 `file:` and `link:` installations default to **Unclassified**, not to an
@@ -96,6 +160,7 @@ npm run typecheck
 npx vitest run tests/installed-management.spec.ts tests/installed-locations-spawn.spec.ts tests/client/installed-source-tools.client.spec.tsx
 npm run check
 npm run test:sources:browser
+npx vitest run tests/upstream-tracking.spec.ts tests/upstream-management.spec.ts tests/client/upstream-tools.client.spec.tsx
 ```
 
 Host tests use disposable profiles and a fake file-manager boundary, including
@@ -118,3 +183,11 @@ has 712 passing tests and two failing uninstall bridge-link cleanup tests
 separate worktree at upstream `e320461`. The installation/uninstall code was
 not modified to hide those failures. Revisit them before a production rollout;
 this development checkpoint does not claim the entire upstream suite is green.
+
+For the upstream-tracking update, the focused behavioral/component lane passes
+63 tests. The broader UI/network/flow run passes 676 tests and retains only
+the same two `#662` baseline failures. Real-browser fixtures also cover setting
+an association, a numerically higher custom version, release and branch
+checks, saved baselines, failure evidence, scope switching and narrow layouts.
+Public npm and GitHub metadata were additionally inspected read-only through
+the built network module; no live profile records were created by that probe.

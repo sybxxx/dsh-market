@@ -8989,6 +8989,20 @@ describe('installed source categories', () => {
     'local-one': { category: 'original', choice: 'original', installedDirectory: 'C:/runtime/local-one' },
     'fork-one': { category: 'modified', choice: 'modified', installedDirectory: 'C:/runtime/fork-one' },
   }
+  it('exposes the market own upstream even though it is excluded from installed cards', async () => {
+    stubFetch({
+      '/dsh-market/installed': { installed: { dshmarket: 'file:market.tgz' }, present: ['dshmarket'], live: [], disabled: [] },
+      '/dsh-market/installed-tools': { canOpen: true, plugins: { dshmarket: {
+        category: 'modified', choice: 'modified', upstream: { repository: 'owner/market', mode: 'npm', packageName: 'dshmarket', baseVersion: '1.70.2' },
+        upstreamStatus: { result: { state: 'updates', latest: '1.70.3' }, checking: false },
+      } } },
+    })
+    render(<MarketSection {...props()} />)
+    fireEvent.click(await screen.findByRole('button', { name: en.upstreamSelf }))
+    expect(await screen.findByLabelText(en.upstreamBaseVersion)).toHaveProperty('value', '1.70.2')
+    expect(screen.getByText(new RegExp(en.upstreamState_updates))).toBeTruthy()
+    expect(screen.getByRole('button', { name: /Installed/ }).textContent).toContain('Upstream changes 1')
+  })
   it('filters the list and groups by identity without changing installation sources', async () => {
     stubFetch({
       '/dsh-market/installed': { installed, present: Object.keys(installed), groups: { Mine: ['local-one', 'fork-one'] }, groupOrder: ['Mine'], disabled: [], live: [] },

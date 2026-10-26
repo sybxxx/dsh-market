@@ -5,7 +5,9 @@
 # dsh-market
 
 This locally maintained fork adds installed-plugin source categories and folder
-actions. See [FORK.md](FORK.md) for synchronization, testing and deployment notes.
+actions, plus explicit upstream tracking against a recorded merged baseline.
+Checks report changes without merging or replacing a custom installation.
+See [FORK.md](FORK.md) for synchronization, testing and deployment notes.
 
 English | [中文](README.zh.md)
 

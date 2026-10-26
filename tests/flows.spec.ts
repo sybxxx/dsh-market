@@ -6982,6 +6982,7 @@ describe('every market route sits behind the host\'s own login (#603)', () => {
     expect((await bed.dispatch('GET', '/dsh-market/installed-tools')).status).toBe(401)
     expect((await bed.dispatch('POST', '/dsh-market/plugin-provenance', {})).status).toBe(401)
     expect((await bed.dispatch('POST', '/dsh-market/open-plugin-folder', {})).status).toBe(401)
+    expect((await bed.dispatch('POST', '/dsh-market/check-upstream', {})).status).toBe(401)
   })
 
   it('changes nothing on a host that publishes no gate', async () => {

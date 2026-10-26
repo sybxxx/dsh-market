@@ -1,68 +1,29 @@
 /** Local display metadata has its own file, so ordinary market writes cannot erase it. */
-import { mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
-import { randomUUID } from 'node:crypto'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { readJsonBody, sameOrigin, sendJson } from './http.ts'
 import { readInstalled, readInstalledManifest } from './profile.ts'
 import { installedLocation, localFolderRequest, locationTarget, openInstalledFolder, PACKAGE_NAME, validateSourceDirectory } from './installed-locations.ts'
 import { isSourceChoice, type InstalledSources, type PluginProvenance } from './plugin-provenance.ts'
 import type { WebServerService } from './routes.ts'
+import { readProvenance, writeProvenance } from './provenance-store.ts'
+import { parseUpstream, upstreamKey } from './upstream-types.ts'
+import { UpstreamTracker } from './upstream-tracker.ts'
+export { readProvenance, writeProvenance } from './provenance-store.ts'
 
-const FILE = 'plugin-provenance.json'
-const MAX_BYTES = 1024 * 1024
-const MAX_PLUGINS = 2000
-
-export function readProvenance(root: string): Record<string, PluginProvenance> {
-  const path = join(root, '.dsh-market', FILE)
-  try {
-    if (statSync(path).size > MAX_BYTES) throw new Error('metadata too large')
-    const value: unknown = JSON.parse(readFileSync(path, 'utf8'))
-    if (value === null || typeof value !== 'object' || (value as { version?: unknown }).version !== 1) throw new Error('unknown metadata version')
-    const plugins = (value as { plugins?: unknown }).plugins
-    if (plugins === null || typeof plugins !== 'object' || Array.isArray(plugins) || Object.keys(plugins).length > MAX_PLUGINS) throw new Error('invalid metadata')
-    const result: Record<string, PluginProvenance> = Object.create(null)
-    for (const [name, record] of Object.entries(plugins)) {
-      if (!PACKAGE_NAME.test(name) || name === '__proto__' || record === null || typeof record !== 'object') throw new Error('invalid plugin metadata')
-      const { category, sourceDirectory } = record as { category?: unknown; sourceDirectory?: unknown }
-      if (category !== undefined && (!isSourceChoice(category) || category === 'auto')) throw new Error('invalid category')
-      if (sourceDirectory !== undefined && (typeof sourceDirectory !== 'string' || sourceDirectory.length > 2048)) throw new Error('invalid source directory')
-      result[name] = { category: category as PluginProvenance['category'], sourceDirectory: sourceDirectory as string | undefined }
-    }
-    return result
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return Object.create(null)
-    throw new Error('来源记录无法读取，未覆盖原文件。请检查 plugin-provenance.json 后重试。 / Source records could not be read and were not overwritten. Check plugin-provenance.json and retry.')
-  }
-}
-
-export function writeProvenance(root: string, name: string, record: PluginProvenance): void {
-  const plugins = readProvenance(root)
-  if (record.category === undefined && record.sourceDirectory === undefined) delete plugins[name]
-  else plugins[name] = record
-  if (Object.keys(plugins).length > MAX_PLUGINS) throw new Error('too many source records')
-  const text = JSON.stringify({ version: 1, plugins }, null, 2) + '\n'
-  if (Buffer.byteLength(text) > MAX_BYTES) throw new Error('source records too large')
-  const dir = join(root, '.dsh-market')
-  mkdirSync(dir, { recursive: true, mode: 0o700 })
-  const temporary = join(dir, `${FILE}.${randomUUID()}.tmp`)
-  try {
-    writeFileSync(temporary, text, { mode: 0o600, flag: 'wx' })
-    renameSync(temporary, join(dir, FILE))
-  } finally { rmSync(temporary, { force: true }) }
-}
-
-export function installedSources(root: string, profile: string, request: IncomingMessage): InstalledSources {
+export function installedSources(root: string, profile: string, request: IncomingMessage, tracker?: UpstreamTracker): InstalledSources {
   const records = readProvenance(root)
+  const statuses = tracker?.views() ?? {}
   const plugins = Object.fromEntries(Object.entries(readInstalled(profile, root))
-    .map(([name, spec]) => [name, installedLocation(root, name, spec, records[name])]))
+    .map(([name, spec]) => [name, { ...installedLocation(root, name, spec, records[name]), upstream: records[name]?.upstream, upstreamStatus: statuses[name] }]))
   return { plugins, canOpen: localFolderRequest(request) }
 }
 
 export function mountInstalledManagement(
   register: WebServerService['register'], root: string, profile: string,
   openFolder = openInstalledFolder,
+  tracker = new UpstreamTracker(root, profile),
 ): Array<() => void> {
+  tracker.start()
   const route = (path: string, method: string, handle: (request: IncomingMessage, response: ServerResponse) => Promise<void> | void) => register({
     kind: 'exact', path,
     handler: async (request, response) => {
@@ -82,8 +43,9 @@ export function mountInstalledManagement(
     return { name, spec: installed[name]! }
   }
   return [
+    () => tracker.stop(),
     route('/dsh-market/installed-tools', 'GET', (request, response) => {
-      sendJson(response, 200, installedSources(root, profile, request))
+      sendJson(response, 200, installedSources(root, profile, request, tracker))
     }),
     route('/dsh-market/plugin-provenance', 'POST', async (request, response) => {
       const body = await readJsonBody(request) as Record<string, unknown>
@@ -92,12 +54,26 @@ export function mountInstalledManagement(
       if (typeof body.sourceDirectory !== 'string' || body.sourceDirectory.length > 2048) throw new Error('invalid source directory')
       const source = body.sourceDirectory.trim()
       const manifest = readInstalledManifest(profile, name, root) as { name?: string } | null
+      const existing = readProvenance(root)[name]?.upstream
+      if (Object.hasOwn(body, 'expectedUpstream')) {
+        const expected = parseUpstream(body.expectedUpstream)
+        if ((expected ? upstreamKey(expected) : null) !== (existing ? upstreamKey(existing) : null)) {
+          throw new Error('上游记录已在别处修改。请重新打开此设置，核对后保存。 / Upstream records changed elsewhere. Reopen these settings, review them and save again.')
+        }
+      }
       const record: PluginProvenance = {
         category: body.category === 'auto' ? undefined : body.category,
         sourceDirectory: source === '' ? undefined : validateSourceDirectory(source, manifest?.name ?? name),
+        upstream: Object.hasOwn(body, 'upstream') ? parseUpstream(body.upstream) : existing,
       }
       writeProvenance(root, name, record)
-      sendJson(response, 200, { ok: true, plugin: installedLocation(root, name, spec, record) })
+      sendJson(response, 200, { ok: true, plugin: { ...installedLocation(root, name, spec, record), upstream: record.upstream } })
+    }),
+    route('/dsh-market/check-upstream', 'POST', async (request, response) => {
+      const body = await readJsonBody(request) as Record<string, unknown>
+      const { name } = installedSpec(body?.name)
+      const status = await tracker.check(name, true)
+      sendJson(response, 200, { ok: true, status })
     }),
     route('/dsh-market/open-plugin-folder', 'POST', async (request, response) => {
       if (!localFolderRequest(request)) return sendJson(response, 403, { error: '请在运行 DSH 的电脑上打开目录。远程请求不会打开服务器文件夹。 / Open folders on the computer running DSH, not through a remote connection.' })
