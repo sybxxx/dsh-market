@@ -1,8 +1,27 @@
 # Local Maintenance
 
 This fork adds installed-plugin source categories and folder actions. It is
-based on upstream `v1.70.2` (`e320461`), not the currently deployed desktop
-market (`1.66.47`). Building or testing this checkout does not install it.
+based on upstream `v1.70.2` (`e320461`). The maintainer's desktop was switched
+from `1.66.47` to the local `1.70.2-sybxxx.1` package on 2026-10-26. Building
+or testing this checkout does not install it.
+
+## Desktop Deployment
+
+Install only with DSH fully closed and after an explicit deployment approval.
+Take a fresh verified checkpoint, retain the original package and profile
+files, then add the local archive with the bundled pnpm in offline,
+ignore-scripts mode. Preserve all other dependency declarations and lockfile
+entries. Compare installed code with the reviewed build and hash-check the
+other packages; distinguish pnpm's workspace-state cache from plugin code.
+Do not edit hard-linked files under the installed node_modules directory.
+
+The first desktop deployment returned the custom version from the running
+host's capabilities/status routes and served the new installed-tools route.
+The native desktop UI also showed the custom version, source filter and
+directory controls. Opening a real file-manager window was not verified in
+this deployment; the isolated tests remain the evidence for that boundary.
+No model request was sent for installation verification. The protected
+upstream updater still refuses to replace this local installation.
 
 ## Repositories and Updates
 
