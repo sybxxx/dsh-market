@@ -2,8 +2,9 @@
 
 This fork adds installed-plugin source categories and folder actions. It is
 based on upstream `v1.70.2` (`e320461`). The maintainer's desktop was switched
-from `1.66.47` to the local `1.70.2-sybxxx.1` package on 2026-10-26. Building
-or testing this checkout does not install it.
+from `1.66.47` to the local `1.70.2-sybxxx.1` package on 2026-10-26, then to
+`1.70.2-sybxxx.2` after separate approval. Building or testing this checkout
+does not install it.
 
 ## Desktop Deployment
 
@@ -23,10 +24,40 @@ this deployment; the isolated tests remain the evidence for that boundary.
 No model request was sent for installation verification. The protected
 upstream updater still refuses to replace this local installation.
 
+The second deployment installed the `.2` archive built from `04a56fb` after a
+fresh closed-app checkpoint. The running desktop host reported that version
+and the native installed page displayed the upstream observations. All 12,664
+inventoried files outside the market package remained unchanged. Association
+records and observations live only in the selected desktop profile; they are
+not committed because source-folder paths are machine-specific.
+
+Four customized plugins were linked to verified upstream baselines:
+
+| Plugin | Original repository | Merged version | Merged commit |
+| --- | --- | --- | --- |
+| `dshmarket` | `dsh-market/dsh-market` | `1.70.2` | `e320461dba3a7e99845f83c7bd106a2f1889dc7f` |
+| `dsh-easyrewrite` | `Renzic-Stone/DSH-EasyRewrite` | `2.6.0` | `8ccdaf46238c09536bd776937273fa9d9d67578b` |
+| `dsh-connect-workbuddy` | `dingminhua/dsh-connect-workbuddy` | `5.10.0` | `f33206e5fbdd9627e99af71f3c1d695045d120e2` |
+| `dsh-plugin-no-workspace` | `SpookySandwich/dsh-plugin-no-workspace` | `1.2.1` | `9c70aa4fc5615a1e419d1d84050813f77b00ffbb` |
+
+The first three baselines were checked against source ancestry and published
+release metadata. The last was checked against an integrity-verified npm
+archive, the public release tag and the local code differences; its local
+package does not have an independent Git history. All four follow `main` to
+detect unpublished commits as well as releases. At the deployment check,
+WorkBuddy had six upstream commits pending and no-workspace had four; the
+other two matched their baselines. Pending commits were not merged, tested
+for compatibility or installed. Nine locally authored plugins were explicitly
+classified without inventing external plugin upstreams. Detailed evidence and
+the previous package/profile checkpoint are retained in the private backup.
+
 ## Repositories and Updates
 
 - `origin`: https://github.com/sybxxx/dsh-market.git
 - `upstream`: https://github.com/dsh-market/dsh-market.git
+- A configured fork remote does not publish local commits. At the second
+  deployment, GitHub `origin/main` was still at upstream `e320461`; the custom
+  commits remained local. Pushing requires separate approval.
 - Keep this checkout independent of the outer DeepSeek-Harness repository.
 - `npm run upstream:check` fetches upstream refs and reports commits not yet
   merged. It never merges, pushes, installs, or restarts anything. It is an
@@ -63,8 +94,8 @@ upstream updater still refuses to replace this local installation.
 
 ## Upstream Tracking (1.70.2-sybxxx.2)
 
-This is a development update, not an automatic replacement of the installed
-desktop market. A user explicitly links the original GitHub repository and
+Building this update does not automatically replace the installed desktop
+market. A user explicitly links the original GitHub repository and
 selects either its npm release package or a GitHub branch. Both can record
 the last merged version and full 40-character upstream commit; npm comparison
 uses the recorded version, and branch comparison uses the recorded commit.
